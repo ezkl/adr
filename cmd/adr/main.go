@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/urfave/cli"
-	"github.com/fatih/color"
 	"github.com/ezkl/adr/pkg/helpers"
+	"github.com/fatih/color"
+	"github.com/urfave/cli/v2"
 )
 
 func main() {
@@ -15,18 +15,30 @@ func main() {
 	app.Usage = "Work with Architecture Decision Records (ADRs)"
 	app.Version = "0.1.0"
 
+	app.EnableBashCompletion = true
 	app.Flags = []cli.Flag{}
-	app.Commands = []cli.Command{
+	app.Commands = []*cli.Command{
 		{
 			Name:    "new",
 			Aliases: []string{"c"},
 			Usage:   "Create a new ADR",
 			Flags:   []cli.Flag{},
 			Action: func(c *cli.Context) error {
-				currentConfig := helpers.GetConfig()
-				currentConfig.CurrentAdr++
-				helpers.UpdateConfig(currentConfig)
-				helpers.NewAdr(currentConfig, c.Args())
+				cfg := helpers.GetConfig()
+				cfg.CurrentAdr++
+
+				err := helpers.NewAdr(cfg, c.Args().Slice())
+
+				if err != nil {
+					return err
+				}
+
+				err = helpers.UpdateConfig(cfg)
+
+				if err != nil {
+					return err
+				}
+
 				return nil
 			},
 		},
