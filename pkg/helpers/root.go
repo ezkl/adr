@@ -1,4 +1,4 @@
-package main
+package helpers
 
 import (
 	"encoding/json"
@@ -46,9 +46,10 @@ var adrConfigTemplateName = "template.md"
 var adrConfigFolderPath = filepath.Join(usr.HomeDir, adrConfigFolderName)
 var adrConfigFilePath = filepath.Join(adrConfigFolderPath, adrConfigFileName)
 var adrTemplateFilePath = filepath.Join(adrConfigFolderPath, adrConfigTemplateName)
-var adrDefaultBaseFolder = filepath.Join(usr.HomeDir, "adr")
+var AdrDefaultBaseFolder = filepath.Join(usr.HomeDir, "adr")
 
-func initBaseDir(baseDir string) {
+
+func InitBaseDir(baseDir string) {
 	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
 		os.Mkdir(baseDir, 0744)
 	} else {
@@ -56,7 +57,7 @@ func initBaseDir(baseDir string) {
 	}
 }
 
-func initConfig(baseDir string) {
+func InitConfig(baseDir string) {
 	if _, err := os.Stat(adrConfigFolderPath); os.IsNotExist(err) {
 		os.Mkdir(adrConfigFolderPath, 0744)
 	}
@@ -68,7 +69,7 @@ func initConfig(baseDir string) {
 	ioutil.WriteFile(adrConfigFilePath, bytes, 0644)
 }
 
-func initTemplate() {
+func InitTemplate() {
 	body := []byte(`
 # {{.Number}}. {{.Title}}
 ======
@@ -92,7 +93,7 @@ Date: {{.Date}}
 	ioutil.WriteFile(adrTemplateFilePath, body, 0644)
 }
 
-func updateConfig(config AdrConfig) {
+func UpdateConfig(config AdrConfig) {
 	bytes, err := json.MarshalIndent(config, "", " ")
 	if err != nil {
 		panic(err)
@@ -100,7 +101,7 @@ func updateConfig(config AdrConfig) {
 	ioutil.WriteFile(adrConfigFilePath, bytes, 0644)
 }
 
-func getConfig() AdrConfig {
+func GetConfig() AdrConfig {
 	var currentConfig AdrConfig
 
 	bytes, err := ioutil.ReadFile(adrConfigFilePath)
@@ -114,24 +115,33 @@ func getConfig() AdrConfig {
 	return currentConfig
 }
 
-func newAdr(config AdrConfig, adrName []string) {
+func NewAdr(config AdrConfig, adrName []string) {
 	adr := Adr{
 		Title:  strings.Join(adrName, " "),
 		Date:   time.Now().Format("02-01-2006 15:04:05"),
 		Number: config.CurrentAdr,
 		Status: PROPOSED,
 	}
+
 	template, err := template.ParseFiles(adrTemplateFilePath)
+
 	if err != nil {
 		panic(err)
 	}
+
 	adrFileName := strconv.Itoa(adr.Number) + "-" + strings.Join(strings.Split(strings.Trim(adr.Title, "\n \t"), " "), "-") + ".md"
+
 	adrFullPath := filepath.Join(config.BaseDir, adrFileName)
+
 	f, err := os.Create(adrFullPath)
+
 	if err != nil {
 		panic(err)
 	}
+
 	template.Execute(f, adr)
+
 	f.Close()
+
 	color.Green("ADR number " + strconv.Itoa(adr.Number) + " was successfully written to : " + adrFullPath)
 }
